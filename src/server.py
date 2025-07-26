@@ -1,5 +1,9 @@
 from fastmcp import FastMCP
-import os 
+import os
+import time
+import smtplib
+from email.mime.text import MIMEText
+
 
 
 mcp = FastMCP("MCP Server")
@@ -11,7 +15,7 @@ mcp = FastMCP("MCP Server")
 def create_archivo_tool(archivo: str):
     open(archivo,'x')
 
-@mcp.resource(
+@mcp.tool(
     title= "Listar Archivos",
     description= "Listar Archivos En El Sistema"
 )
@@ -49,6 +53,7 @@ def obtener_detalles_archivo_tool(path: str):
         "es_directorio": os.path.isdir(path),
         "es_archivo": os.path.isfile(path)
     }
+    return detalles
 
 
 

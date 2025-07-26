@@ -20,9 +20,6 @@ async def client():
         Cuando quieras usar una herramienta, escribe exactamente:
             nombre,{{"argumento": "valor"}}
         
-        Genera una lista de herramientas en formato Python. Cada herramienta debe ser una tupla que contenga el nombre de la herramienta (como una cadena) y un diccionario de sus argumentos. Si hay más de una herramienta, sepáralas con comas dentro de la lista principal. La salida completa debe ser una lista de Python, debe estar entre [] siempre, escribelo exactamente asi: [(nombre, {{"argumento": "valor"}}), (nombre, {{"argumento": "valor"}})]
-        Ejemplo de lo que espero para dos herramientas:
-        [(herramienta_uno, {{"parametro1": "valor1"}}), (herramienta_dos, {{"parametroA": "valorA"}})]
         Cuando el usuario te pida crear un archivo y no te especifica el nombre no le preguntes el nombre, solo crealo iventatelo
         """
 
