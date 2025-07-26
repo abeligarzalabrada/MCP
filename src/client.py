@@ -4,23 +4,37 @@ from dotenv import load_dotenv
 from fastmcp import Client as MCPClient
 import asyncio
 import ast
+import json
 
 load_dotenv()
 
 async def client():
-
     async with MCPClient("./server.py") as mcp_client:
 
         tools_disponibles = await mcp_client.list_tools()
 
-
         tools_info_promt = f"""
-        Herramientas disponibles: : {tools_disponibles}
-
-        Cuando quieras usar una herramienta, escribe exactamente:
-            nombre,{{"argumento": "valor"}}
-        
-        Cuando el usuario te pida crear un archivo y no te especifica el nombre no le preguntes el nombre, solo crealo iventatelo
+        ## Gemini Instructions (MCP)
+            
+            From now on, when operating within the MCP environment, follow these strict guidelines for tool usage and file management:
+            ---
+            ### Tool Usage
+            
+            * **Available Tools:** {tools_disponibles}
+            * **Single Tool Format:** When you want to use a tool, type its `name` **exactly** followed by its arguments in JSON format:
+                ```
+                name, {{"argument": "value"}}
+                ```
+            * **Multiple Tool Format:** If you need to use multiple tools in a single response, place each call on a separate line, following the same format. Each action will be executed in the order you provide them:
+                ```
+                [
+                    tool_name_1,{{"argument_1": "value_1"}}
+                    tool_name_2,{{"argument_a": "value_a", "argument_b": "value_b"}}
+                ]
+                ```
+            ---
+            ### File Creation
+            * **Automatic Naming:** When the user asks you to create a file and **does not specify the name**, do not ask. Instead, **invent an appropriate name** and proceed to create it directly.
         """
 
         client = genai.Client()
@@ -28,38 +42,33 @@ async def client():
         while True:
             texto_usuario = input("🧑 Tú: ")
 
-            if texto_usuario.lower() in "salir": break
+            if texto_usuario.lower() in "exit": break
 
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
-                contents=f" estas sos tus instrucciones {tools_info_promt} y el susuario dijo {texto_usuario} ",
+                contents=f"Estas son tus instrucciones {tools_info_promt} y el susuario dijo {texto_usuario} ",
                 config=types.GenerateContentConfig(
-                    thinking_config=types.ThinkingConfig(thinking_budget=0)  # Disables thinking
+                    thinking_config=types.ThinkingConfig(thinking_budget=0)
                 ),
             )
             with open("ahora.txt", "w") as f:
                 j = response.text
                 print(j)
 
-
-
             if isinstance(response.text, list):
                 print(type(response.text))
 
             elif any(tool.name in response.text for tool in tools_disponibles):
-                partes = response.text.split(",", )
-                nombre_herramienta = partes[0]
-                parametros = eval(partes[1])
-
-                await mcp_client.call_tool(name=nombre_herramienta, arguments=parametros)
-
-                print("Ya lo hice")
-            else:
-                print(response.text)
+                try:
+                    nombre_herramienta, parametros_str = response.text.split(",", 1)
+                    parametros = json.loads(parametros_str.replace("'", '"'))
+                    resultado = await mcp_client.call_tool(name=nombre_herramienta.strip(), arguments=parametros)
+                    print("Resultado:", resultado)
+                except Exception as e:
+                    print(f"Error al ejecutar herramienta: {e}")
+                else:
+                    print(response.text)
 
 
 if __name__ == "__main__":
     asyncio.run(client())
-
-
-
