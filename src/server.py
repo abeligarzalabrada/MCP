@@ -208,6 +208,10 @@ def configurar_remitente_tool(remitente: str, contrasena: str):
     contrasena_guardada = contrasena
     return {"resultado": f"Remitente configurado: {remitente_guardado}"}
 
+USERDATA_DIR = "userData"
+EMAIL_CONFIG_FILE = os.path.join(USERDATA_DIR, "email_config.json")
+os.makedirs(USERDATA_DIR, exist_ok=True)
+
 @mcp.tool(
     title="Configurar cuenta de correo",
     description="Guarda remitente y contraseña de correo de forma persistente."
@@ -252,7 +256,6 @@ def enviar_correo_tool(destinatario: str, asunto: str, mensaje: str, remitente: 
         return {"error": f"Autenticación fallida: {str(e)}"}
     except Exception as e:
         return {"error": str(e)}
-
 
 #conectar drive
 
