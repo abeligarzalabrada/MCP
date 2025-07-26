@@ -12,8 +12,8 @@ def create_archivo_tool(archivo: str):
     open(archivo,'x')
 
 @mcp.resource(
-    title= "Bucar Archivos",
-    description= "Bucar Archivos En El Sistema"
+    title= "Listar Archivos",
+    description= "Listar Archivos En El Sistema"
 )
 def search_archivo_tool(path:str):
     print(os.listdir(path))
