@@ -195,19 +195,6 @@ def organizar_por_tipo_tool(path: str):
 #Tools oficina, enviar correos y workflows
 
 # Variables globales de remitente
-remitente_guardado = None
-contrasena_guardada = None
-
-@mcp.tool(
-    title="Configurar cuenta de correo",
-    description="Establece el remitente y la contraseña por defecto para enviar correos."
-)
-def configurar_remitente_tool(remitente: str, contrasena: str):
-    global remitente_guardado, contrasena_guardada
-    remitente_guardado = remitente
-    contrasena_guardada = contrasena
-    return {"resultado": f"Remitente configurado: {remitente_guardado}"}
-
 USERDATA_DIR = "userData"
 EMAIL_CONFIG_FILE = os.path.join(USERDATA_DIR, "email_config.json")
 os.makedirs(USERDATA_DIR, exist_ok=True)
