@@ -7,6 +7,7 @@ from graphviz import Digraph
 import google.generativeai as genai
 from dotenv import load_dotenv
 import shutil
+import zipfile
 
 
 load_dotenv()
@@ -149,6 +150,19 @@ def enviar_correo_tool(remitente: str, contraseña: str, destinatario: str, asun
         return {"error": f"Error SMTP: {str(e)}"}
     except Exception as e:
         return {"error": f"Error inesperado: {str(e)}"}
+
+@mcp.tool(
+    title="Comprimir Archivos",
+    description="Crea un archivo .zip con archivos especificados separados por coma."
+)
+def comprimir_tool(archivos: str, salida_zip: str):
+    try:
+        with zipfile.ZipFile(salida_zip, 'w') as zipf:
+            for archivo in archivos.split(','):
+                zipf.write(archivo.strip())
+        return {"resultado": f"Archivos comprimidos en {salida_zip}"}
+    except Exception as e:
+        return {"error": str(e)}
 
 @mcp.tool(
     title="Generar Workflow Avanzado",
