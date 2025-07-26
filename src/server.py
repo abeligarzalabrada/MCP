@@ -6,6 +6,8 @@ from email.mime.text import MIMEText
 from graphviz import Digraph
 import google.generativeai as genai
 from dotenv import load_dotenv
+import shutil
+
 
 load_dotenv()
 genai.configure()
@@ -25,6 +27,51 @@ def create_archivo_tool(archivo: str):
         return {"error": "El archivo ya existe."}
     except Exception as e:
         return {"error": str(e)}
+
+@mcp.tool(
+    title="Crear Directorio",
+    description="Crea un nuevo directorio en la ubicación especificada."
+)
+def crear_directorio_tool(ruta: str):
+    try:
+        os.makedirs(ruta, exist_ok=True)
+        return {"resultado": f"Directorio '{ruta}' creado exitosamente."}
+    except Exception as e:
+        return {"error": str(e)}
+
+@mcp.tool(
+    title="Renombrar Archivo",
+    description="Renombra un archivo o carpeta especificado."
+)
+def renombrar_archivo_tool(ruta_original: str, nueva_ruta: str):
+    try:
+        os.rename(ruta_original, nueva_ruta)
+        return {"resultado": f"Renombrado exitosamente de '{ruta_original}' a '{nueva_ruta}'."}
+    except Exception as e:
+        return {"error": str(e)}
+
+@mcp.tool(
+    title="Mover Archivo",
+    description="Mueve un archivo desde una ubicación hacia otra especificada."
+)
+def mover_archivo_tool(origen: str, destino: str):
+    try:
+        shutil.move(origen, destino)
+        return {"resultado": f"Archivo movido exitosamente desde {origen} a {destino}."}
+    except Exception as e:
+        return {"error": str(e)}
+
+@mcp.tool(
+    title="Copiar Archivo",
+    description="Copia un archivo desde una ubicación hacia otra especificada."
+)
+def copiar_archivo_tool(origen: str, destino: str):
+    try:
+        shutil.copy2(origen, destino)
+        return {"resultado": f"Archivo copiado exitosamente desde {origen} a {destino}."}
+    except Exception as e:
+        return {"error": str(e)}
+
 
 @mcp.tool(
     title="Listar Archivos",
