@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter.scrolledtext import ScrolledText
 import asyncio
 import threading
-from client import geminis_peticion
+# La línea "from client import geminis_peticion" fue eliminada de aquí.
 
 class MinimalDarkUI(tk.Tk):
     def __init__(self):
@@ -19,7 +19,7 @@ class MinimalDarkUI(tk.Tk):
 
         # "Burger" menu button
         self.burger_btn = tk.Button(self, text="≡", font=("Segoe UI", 18), fg="#e0e0e0", bg="#404247",
-                                    activebackground="#3a86ff", bd=0, width=2, command=self.toggle_panel)
+                                     activebackground="#3a86ff", bd=0, width=2, command=self.toggle_panel)
         self.burger_btn.place(x=12, y=12)
 
         # Input box for user message (bottom)
@@ -28,7 +28,7 @@ class MinimalDarkUI(tk.Tk):
 
         self.input_var = tk.StringVar()
         self.input_entry = tk.Entry(self.input_frame, font=("Segoe UI", 14), bg="#1e1e1e", fg="#f7f7f7",
-                                   insertbackground="#f7f7f7", bd=2, relief="flat", textvariable=self.input_var)
+                                      insertbackground="#f7f7f7", bd=2, relief="flat", textvariable=self.input_var)
         self.input_entry.pack(side="left", fill="both", expand=True, padx=(0, 8), pady=8)
         self.input_entry.bind("<Return>", self.on_send)
 
@@ -100,6 +100,9 @@ class MinimalDarkUI(tk.Tk):
         self.conversation.config(state='disabled')
 
     async def handle_bot_response(self, user_message):
+        # ✅ CORRECCIÓN: La importación se mueve aquí para romper el ciclo.
+        from client import geminis_peticion
+
         # Puedes personalizar el prompt según tu flujo
         tools_info_promt = (
             "## Gemini Instructions (MCP)\n"
