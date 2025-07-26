@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 import shutil
 import zipfile
 
-
+#hoalsdadsdsa
 load_dotenv()
 
 client_gemini = genai.Client()
