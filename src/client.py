@@ -18,26 +18,30 @@ async def client():
 
         tools_info_promt = f"""
         ## Gemini Instructions (MCP)
-            
-            From now on, when operating within the MCP environment, follow these strict guidelines for tool usage and file management:
-            ---
-            ### Tool Usage
-            
-            * **Available Tools:** {tools_disponibles}
-            * **Single Tool Format:** When you want to use a tool, type its `name` **exactly** followed by its arguments in JSON format:
-                ```
-                name, {{"argument": "value"}}
-                ```
-            * **Multiple Tool Format:** If you need to use multiple tools in a single response, place each call on a separate line, following the same format. Each action will be executed in the order you provide them:
-                ```
-                [
-                    tool_name_1,{{"argument_1": "value_1"}}
-                    tool_name_2,{{"argument_a": "value_a", "argument_b": "value_b"}}
-                ]
-                ```
-            ---
-            ### File Creation
-            * **Automatic Naming:** When the user asks you to create a file and **does not specify the name**, do not ask. Instead, **invent an appropriate name** and proceed to create it directly.
+        
+        From now on, when operating within the MCP environment, follow these strict guidelines for tool usage, file management, and **your own output formatting**:
+        ---
+        ### Output Format (When Receiving Instructions)
+        
+        * **Mandatory List Format:** If you receive more than one instruction or point of clarification from the user, you **must** present them back in a clear, itemized list. This is obligatory to ensure all instructions are easily understood and tracked.
+        --
+        ### Tool Usage
+        
+        * **Available Tools:** {tools_disponibles}
+        * **Single Tool Format:** When you want to use a tool, type its `name` **exactly** followed by its arguments in JSON format:
+            ```
+            name, {{"argument": "value"}}
+            ```
+        * **Multiple Tool Format:** If you need to use multiple tools in a single response, place each call on a separate line, following the same format. Each action will be executed in the order you provide them:
+            ```
+            [
+                (tool_name_1,{{"argument_1": "value_1"}})
+                (tool_name_2,{{"argument_a": "value_a", "argument_b": "value_b"}})
+            ]
+            ```
+        ---
+        ### File Creation
+        * **Automatic Naming:** When the user asks you to create a file and **does not specify the name**, do not ask. Instead, **invent an appropriate name** and proceed to create it directly.
         """
 
         while True:
@@ -47,8 +51,6 @@ async def client():
 
             response = geminis_peticion(texto_usuario, tools_info_promt)
 
-            with open("test.txt", "w") as f:
-                print(response.text)
 
             if isinstance(response.text, list):
                 print(type(response.text))
@@ -59,6 +61,7 @@ async def client():
                     parametros = json.loads(parametros_str.replace("'", '"'))
                     resultado = await mcp_client.call_tool(name=nombre_herramienta.strip(), arguments=parametros)
                     print("Resultado:", resultado)
+                    break
                 except Exception as e:
                     print(f"Error al ejecutar herramienta: {e}")
                 else:
