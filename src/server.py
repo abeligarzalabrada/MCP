@@ -1,36 +1,39 @@
-from fastmcp import FastMCP
 import os
 import time
-import smtplib
-from email.mime.text import MIMEText
-from graphviz import Digraph
-from google import genai
-from dotenv import load_dotenv
 import shutil
 import zipfile
+import smtplib
+import json
+from email.mime.text import MIMEText
+from graphviz import Digraph
+from dotenv import load_dotenv
+from fastmcp import FastMCP
+from google import genai
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
-import json
 
+# === Cargar variables de entorno ===
 load_dotenv()
 
-client_gemini = genai.Client()
+# === Inicialización ===
 mcp = FastMCP("MCP Server")
 
-# Directorio de configuración persistente
-USERDATA_DIR = "userData"
-EMAIL_CONFIG_FILE = os.path.join(USERDATA_DIR, "email_config.json")
-DRIVE_TOKEN_FILE = os.path.join(USERDATA_DIR, "drive_token.json")
-DRIVE_CONFIG_FILE = os.path.join(USERDATA_DIR, "drive_config.json")
-os.makedirs(USERDATA_DIR, exist_ok=True)
+# === API Key y variables seguras ===
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyDufiJBwy7DMq6vVxn67LhbKSawlnjX51Q")
+EMAIL_DEFAULT_PASSWORD = os.getenv("EMAIL_DEFAULT_PASSWORD", "nsur vtbj wyfj nmzb")
 
+genai.configure(api_key=GOOGLE_API_KEY)
+client_gemini = genai
+
+# === Rutas internas ===
+USERDATA_DIR = "userdata"
+os.makedirs(USERDATA_DIR, exist_ok=True)
+DRIVE_TOKEN_FILE = os.path.join(USERDATA_DIR, "mycreds.txt")
 drive_instancia = None
 
-#Control de archivos, carpetas y rutas
-@mcp.tool(
-    title="Crea Archivo",
-    description="Crea Archivos En El Sistema"
-)
+# === Herramientas de archivos ===
+
+@mcp.tool(title="Crea Archivo", description="Crea Archivos En El Sistema")
 def create_archivo_tool(archivo: str):
     try:
         with open(archivo, 'x'):
@@ -41,10 +44,7 @@ def create_archivo_tool(archivo: str):
     except Exception as e:
         return {"error": str(e)}
 
-@mcp.tool(
-    title="Crear Directorio",
-    description="Crea un nuevo directorio en la ubicación especificada."
-)
+@mcp.tool(title="Crear Directorio", description="Crea un nuevo directorio en la ubicación especificada.")
 def crear_directorio_tool(ruta: str):
     try:
         os.makedirs(ruta, exist_ok=True)
@@ -52,10 +52,7 @@ def crear_directorio_tool(ruta: str):
     except Exception as e:
         return {"error": str(e)}
 
-@mcp.tool(
-    title="Renombrar Archivo",
-    description="Renombra un archivo o carpeta especificado."
-)
+@mcp.tool(title="Renombrar Archivo", description="Renombra un archivo o carpeta especificado.")
 def renombrar_archivo_tool(ruta_original: str, nueva_ruta: str):
     try:
         os.rename(ruta_original, nueva_ruta)
@@ -63,10 +60,7 @@ def renombrar_archivo_tool(ruta_original: str, nueva_ruta: str):
     except Exception as e:
         return {"error": str(e)}
 
-@mcp.tool(
-    title="Mover Archivo",
-    description="Mueve un archivo desde una ubicación hacia otra especificada."
-)
+@mcp.tool(title="Mover Archivo", description="Mueve un archivo desde una ubicación hacia otra especificada.")
 def mover_archivo_tool(origen: str, destino: str):
     try:
         shutil.move(origen, destino)
@@ -74,10 +68,7 @@ def mover_archivo_tool(origen: str, destino: str):
     except Exception as e:
         return {"error": str(e)}
 
-@mcp.tool(
-    title="Copiar Archivo",
-    description="Copia un archivo desde una ubicación hacia otra especificada."
-)
+@mcp.tool(title="Copiar Archivo", description="Copia un archivo desde una ubicación hacia otra especificada.")
 def copiar_archivo_tool(origen: str, destino: str):
     try:
         shutil.copy2(origen, destino)
@@ -85,20 +76,14 @@ def copiar_archivo_tool(origen: str, destino: str):
     except Exception as e:
         return {"error": str(e)}
 
-@mcp.tool(
-    title="Listar Archivos",
-    description="Listar Archivos En El Sistema"
-)
+@mcp.tool(title="Listar Archivos", description="Listar Archivos En El Sistema")
 def search_archivo_tool(path: str):
     try:
         return {"archivos": os.listdir(path)}
     except Exception as e:
         return {"error": str(e)}
 
-@mcp.tool(
-    title="Eliminar Archivo",
-    description="Elimina Archivos En El Sistema"
-)
+@mcp.tool(title="Eliminar Archivo", description="Elimina Archivos En El Sistema")
 def delete_archivo_tool(path: str):
     try:
         os.remove(path)
@@ -108,10 +93,7 @@ def delete_archivo_tool(path: str):
     except Exception as e:
         return {"error": str(e)}
 
-@mcp.tool(
-    title="Edita Archivo",
-    description="Edita Archivos En El Sistema"
-)
+@mcp.tool(title="Edita Archivo", description="Edita Archivos En El Sistema")
 def editar_archivo_tool(path: str, text: str):
     try:
         with open(path, "w") as archivo:
@@ -120,28 +102,23 @@ def editar_archivo_tool(path: str, text: str):
     except Exception as e:
         return {"error": str(e)}
 
-@mcp.tool(
-    title="Obtener detalles de archivo",
-    description="Retorna metadatos como tamaño, fecha creación y fecha modificación de un archivo específico."
-)
+@mcp.tool(title="Obtener detalles de archivo", description="Retorna metadatos de un archivo específico.")
 def obtener_detalles_archivo_tool(path: str):
     if not os.path.exists(path):
         return {"error": "El archivo no existe."}
+    try:
+        return {
+            "ruta_absoluta": os.path.abspath(path),
+            "tamaño_bytes": os.path.getsize(path),
+            "fecha_creacion": time.ctime(os.path.getctime(path)),
+            "fecha_modificacion": time.ctime(os.path.getmtime(path)),
+            "es_directorio": os.path.isdir(path),
+            "es_archivo": os.path.isfile(path)
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
-    detalles = {
-        "ruta_absoluta": os.path.abspath(path),
-        "tamaño_bytes": os.path.getsize(path),
-        "fecha_creacion": time.ctime(os.path.getctime(path)),
-        "fecha_modificacion": time.ctime(os.path.getmtime(path)),
-        "es_directorio": os.path.isdir(path),
-        "es_archivo": os.path.isfile(path)
-    }
-    return detalles
-
-@mcp.tool(
-    title="Estructura de carpetas",
-    description="Devuelve una estructura jerárquica de archivos desde la ruta dada."
-)
+@mcp.tool(title="Estructura de carpetas", description="Devuelve una estructura jerárquica desde la ruta dada.")
 def estructura_directorio_tool(path: str):
     try:
         estructura = []
@@ -155,10 +132,7 @@ def estructura_directorio_tool(path: str):
     except Exception as e:
         return {"error": str(e)}
 
-@mcp.tool(
-    title="Comprimir Archivos",
-    description="Crea un archivo .zip con archivos especificados separados por coma."
-)
+@mcp.tool(title="Comprimir Archivos", description="Crea un archivo .zip con archivos separados por coma.")
 def comprimir_tool(archivos: str, salida_zip: str):
     try:
         with zipfile.ZipFile(salida_zip, 'w') as zipf:
@@ -168,10 +142,7 @@ def comprimir_tool(archivos: str, salida_zip: str):
     except Exception as e:
         return {"error": str(e)}
 
-@mcp.tool(
-    title="Descomprimir ZIP",
-    description="Descomprime un archivo ZIP en la carpeta destino especificada."
-)
+@mcp.tool(title="Descomprimir ZIP", description="Descomprime un archivo ZIP en la carpeta destino.")
 def descomprimir_zip_tool(archivo_zip: str, carpeta_destino: str):
     try:
         with zipfile.ZipFile(archivo_zip, 'r') as zip_ref:
@@ -180,10 +151,7 @@ def descomprimir_zip_tool(archivo_zip: str, carpeta_destino: str):
     except Exception as e:
         return {"error": str(e)}
 
-@mcp.tool(
-    title="Organizar archivos por tipo",
-    description="Agrupa archivos en carpetas según su extensión."
-)
+@mcp.tool(title="Organizar archivos por tipo", description="Agrupa archivos en carpetas por su extensión.")
 def organizar_por_tipo_tool(path: str):
     try:
         for archivo in os.listdir(path):
@@ -197,32 +165,13 @@ def organizar_por_tipo_tool(path: str):
     except Exception as e:
         return {"error": str(e)}
 
-@mcp.tool(
-    title="Configurar cuenta de correo",
-    description="Guarda remitente y contraseña de correo de forma persistente."
-)
-def configurar_remitente_tool(remitente: str, contrasena: str):
-    try:
-        with open(EMAIL_CONFIG_FILE, "w") as f:
-            json.dump({"remitente": remitente, "contrasena": contrasena}, f)
-        return {"resultado": f"Cuenta {remitente} configurada y guardada exitosamente."}
-    except Exception as e:
-        return {"error": str(e)}
+# === Herramientas adicionales ===
 
-@mcp.tool(
-    title="Enviar correo electrónico",
-    description="Envía correos usando la configuración guardada o sobrescribiendo temporalmente."
-)
+@mcp.tool(title="Enviar correo electrónico", description="Envía correos con configuración opcional.")
 def enviar_correo_tool(destinatario: str, asunto: str, mensaje: str, remitente: str = None, contrasena: str = None):
     try:
         if not remitente or not contrasena:
-            if not os.path.exists(EMAIL_CONFIG_FILE):
-                return {"error": "No hay configuración de correo guardada. Usa configurar_remitente_tool."}
-            with open(EMAIL_CONFIG_FILE, "r") as f:
-                data = json.load(f)
-                remitente = remitente or data.get("remitente")
-                contrasena = contrasena or data.get("contrasena")
-
+            contrasena = contrasena or EMAIL_DEFAULT_PASSWORD
         if not remitente or not contrasena:
             return {"error": "Faltan datos para autenticación."}
 
@@ -236,82 +185,60 @@ def enviar_correo_tool(destinatario: str, asunto: str, mensaje: str, remitente: 
             servidor.send_message(msg)
 
         return {"resultado": f"Correo enviado exitosamente a {destinatario} desde {remitente}."}
-
     except smtplib.SMTPAuthenticationError as e:
         return {"error": f"Autenticación fallida: {str(e)}"}
     except Exception as e:
         return {"error": str(e)}
 
-@mcp.tool(
-    title="Conectar cuenta de Google Drive",
-    description="Almacena y reutiliza credenciales de Drive de forma persistente."
-)
-def configurar_drive_tool(token_path: str = "mycreds.txt"):
+@mcp.tool(title="Conectar cuenta de Google Drive", description="Conecta a Google Drive y reutiliza token.")
+def configurar_drive_tool(token_path: str = DRIVE_TOKEN_FILE):
     global drive_instancia
     try:
         gauth = GoogleAuth()
-        gauth.LoadCredentialsFile(token_path)
-
+        if os.path.exists(token_path):
+            gauth.LoadCredentialsFile(token_path)
         if gauth.credentials is None:
-            return {"error": "Token inválido o ausente. Debes autenticar con token válido."}
+            gauth.LocalWebserverAuth()
         elif gauth.access_token_expired:
             gauth.Refresh()
         else:
             gauth.Authorize()
-
-        gauth.SaveCredentialsFile(DRIVE_TOKEN_FILE)
-
-        with open(DRIVE_CONFIG_FILE, "w") as f:
-            json.dump({"token_path": token_path}, f)
-
+        gauth.SaveCredentialsFile(token_path)
         drive_instancia = GoogleDrive(gauth)
-
         archivos = drive_instancia.ListFile({'q': "'root' in parents and trashed=false"}).GetList()
         return {"resultado": f"Conectado a Google Drive. {len(archivos)} archivos listados."}
     except Exception as e:
         return {"error": str(e)}
 
-@mcp.tool(
-    title="Generar Workflow Avanzado",
-    description="Genera diagramas de workflow complejos con sub-ramas y descripciones breves usando Graphviz y un modelo de IA."
-)
+@mcp.tool(title="Generar Workflow Avanzado", description="Genera diagramas de workflows usando Gemini y Graphviz.")
 def generar_workflow_avanzado_tool(solicitud: str):
-    prompt = f"Genera un workflow detallado con subpasos y breves descripciones para: {solicitud}. Estructura claramente en ramas principales y subramas."
-
+    prompt = f"Genera un workflow detallado con subpasos y descripciones para: {solicitud}."
     response = client_gemini.models.generate_content(
         model="gemini-2.5-flash",
-        contents=f"{prompt}",
+        contents=prompt,
     )
-
     workflow_data = response.text
     dot = Digraph(comment="Workflow avanzado", format="png")
-
     lines = workflow_data.strip().split('\n')
     parent_stack = []
 
     for line in lines:
         if not line.strip():
             continue
-
         indent = len(line) - len(line.lstrip(' '))
         content = line.strip()
-
         node_id = f"{hash(content)}"
         dot.node(node_id, content, shape="box")
-
+        while parent_stack and parent_stack[-1][0] >= indent:
+            parent_stack.pop()
         if parent_stack:
-            while parent_stack and parent_stack[-1][0] >= indent:
-                parent_stack.pop()
-
-            if parent_stack:
-                dot.edge(parent_stack[-1][1], node_id)
-
+            dot.edge(parent_stack[-1][1], node_id)
         parent_stack.append((indent, node_id))
 
     output_path = "workflow_avanzado"
     dot.render(output_path, view=False, cleanup=True)
+    return {"resultado": f"Workflow generado en {output_path}.png"}
 
-    return {"resultado": f"Workflow avanzado generado en {output_path}.png"}
-
+# === Lanzador principal ===
 if __name__ == "__main__":
     mcp.run()
