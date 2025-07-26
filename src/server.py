@@ -159,6 +159,19 @@ def comprimir_tool(archivos: str, salida_zip: str):
         return {"error": str(e)}
 
 @mcp.tool(
+    title="Descomprimir ZIP",
+    description="Descomprime un archivo ZIP en la carpeta destino especificada."
+)
+def descomprimir_zip_tool(archivo_zip: str, carpeta_destino: str):
+    try:
+        with zipfile.ZipFile(archivo_zip, 'r') as zip_ref:
+            zip_ref.extractall(carpeta_destino)
+        return {"resultado": f"Archivo {archivo_zip} descomprimido en {carpeta_destino}"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@mcp.tool(
     title="Organizar archivos por tipo",
     description="Agrupa archivos en carpetas según su extensión."
 )
