@@ -8,8 +8,10 @@ import json
 
 load_dotenv()
 
+client_geminis = genai.Client()
+
 async def client():
-    async with MCPClient("server.py") as mcp_client:
+    async with MCPClient("./server.py") as mcp_client:
 
         tools_disponibles = await mcp_client.list_tools()
 
@@ -37,20 +39,17 @@ async def client():
             * **Automatic Naming:** When the user asks you to create a file and **does not specify the name**, do not ask. Instead, **invent an appropriate name** and proceed to create it directly.
         """
 
-        client = genai.Client()
+
+
+
 
         while True:
             texto_usuario = input("🧑Tú: ")
 
             if texto_usuario.lower() in "exit": break
 
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=f"Estas son tus instrucciones {tools_info_promt} y el susuario dijo {texto_usuario} ",
-                config=types.GenerateContentConfig(
-                    thinking_config=types.ThinkingConfig(thinking_budget=0)
-                ),
-            )
+            response = geminis_peticion(texto_usuario, tools_info_promt, )
+
             with open("test.txt", "w") as f:
                 print(response.text)
 
@@ -68,6 +67,18 @@ async def client():
                 else:
                     print(response.text)
 
+def geminis_peticion(texto_usuario, tools_info_promt):
+
+    response = client_geminis.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=f"Estas son tus instrucciones {tools_info_promt} y el susuario dijo {texto_usuario} ",
+        config=types.GenerateContentConfig(
+            thinking_config=types.ThinkingConfig(thinking_budget=0)
+        ),
+
+
+    )
+    return response
 
 if __name__ == "__main__":
     asyncio.run(client())
