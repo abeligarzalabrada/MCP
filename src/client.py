@@ -10,6 +10,7 @@ load_dotenv()
 
 client_geminis = genai.Client()
 
+
 async def client():
     async with MCPClient("./server.py") as mcp_client:
 
@@ -39,16 +40,12 @@ async def client():
             * **Automatic Naming:** When the user asks you to create a file and **does not specify the name**, do not ask. Instead, **invent an appropriate name** and proceed to create it directly.
         """
 
-
-
-
-
         while True:
             texto_usuario = input("🧑Tú: ")
 
             if texto_usuario.lower() in "exit": break
 
-            response = geminis_peticion(texto_usuario, tools_info_promt, )
+            response = geminis_peticion(texto_usuario, tools_info_promt)
 
             with open("test.txt", "w") as f:
                 print(response.text)
@@ -75,7 +72,6 @@ def geminis_peticion(texto_usuario, tools_info_promt):
         config=types.GenerateContentConfig(
             thinking_config=types.ThinkingConfig(thinking_budget=0)
         ),
-
 
     )
     return response
