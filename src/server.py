@@ -209,36 +209,50 @@ def configurar_remitente_tool(remitente: str, contrasena: str):
     return {"resultado": f"Remitente configurado: {remitente_guardado}"}
 
 @mcp.tool(
+    title="Configurar cuenta de correo",
+    description="Guarda remitente y contraseña de correo de forma persistente."
+)
+def configurar_remitente_tool(remitente: str, contrasena: str):
+    try:
+        with open(EMAIL_CONFIG_FILE, "w") as f:
+            json.dump({"remitente": remitente, "contrasena": contrasena}, f)
+        return {"resultado": f"Cuenta {remitente} configurada y guardada exitosamente."}
+    except Exception as e:
+        return {"error": str(e)}
+
+@mcp.tool(
     title="Enviar correo electrónico",
-    description="Envía correos usando el remitente configurado previamente o se puede sobrescribir en la llamada."
+    description="Envía correos usando la configuración guardada o sobrescribiendo temporalmente."
 )
 def enviar_correo_tool(destinatario: str, asunto: str, mensaje: str, remitente: str = None, contrasena: str = None):
-    global remitente_guardado, contrasena_guardada
-
-    remitente_final = remitente if remitente else remitente_guardado
-    contrasena_final = contrasena if contrasena else contrasena_guardada
-
-    if not remitente_final or not contrasena_final:
-        return {"error": "No hay remitente y contraseña configurados. Usa configurar_remitente_tool o proporciona ambos al enviar."}
-
-    msg = MIMEText(mensaje)
-    msg['Subject'] = asunto
-    msg['From'] = remitente_final
-    msg['To'] = destinatario
-
     try:
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as servidor:
-            servidor.login(remitente_final, contrasena_final)
+        if not remitente or not contrasena:
+            if not os.path.exists(EMAIL_CONFIG_FILE):
+                return {"error": "No hay configuración de correo guardada. Usa configurar_remitente_tool."}
+            with open(EMAIL_CONFIG_FILE, "r") as f:
+                data = json.load(f)
+                remitente = remitente or data.get("remitente")
+                contrasena = contrasena or data.get("contrasena")
+
+        if not remitente or not contrasena:
+            return {"error": "Faltan datos para autenticación."}
+
+        msg = MIMEText(mensaje)
+        msg["Subject"] = asunto
+        msg["From"] = remitente
+        msg["To"] = destinatario
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as servidor:
+            servidor.login(remitente, contrasena)
             servidor.send_message(msg)
-        return {"resultado": f"Correo enviado exitosamente a {destinatario} desde {remitente_final}."}
-    except smtplib.SMTPAuthenticationError:
-        return {"error": "Error de autenticación. Verifica correo y contraseña."}
-    except smtplib.SMTPRecipientsRefused:
-        return {"error": "Destinatario inválido o rechazado."}
-    except smtplib.SMTPException as e:
-        return {"error": f"Error SMTP: {str(e)}"}
+
+        return {"resultado": f"Correo enviado exitosamente a {destinatario} desde {remitente}."}
+
+    except smtplib.SMTPAuthenticationError as e:
+        return {"error": f"Autenticación fallida: {str(e)}"}
     except Exception as e:
-        return {"error": f"Error inesperado: {str(e)}"}
+        return {"error": str(e)}
+
 
 #conectar drive
 
