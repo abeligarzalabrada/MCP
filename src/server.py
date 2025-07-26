@@ -242,30 +242,33 @@ def enviar_correo_tool(destinatario: str, asunto: str, mensaje: str, remitente: 
 
 #conectar drive
 
+drive_token_path = "drive_token.json"
+drive_instancia = None
+
 @mcp.tool(
-    title="Conectar a Google Drive",
-    description="Autentica al usuario en Google Drive usando un token personalizado (clave de acceso)."
+    title="Conectar cuenta de Google Drive",
+    description="Almacena y reutiliza credenciales de Drive. Permite volver a usar la sesión sin reingresar el token."
 )
-def conectar_drive_tool(token_path: str):
+def configurar_drive_tool(token_path: str = "mycreds.txt"):
+    global drive_instancia, drive_token_path
     try:
         gauth = GoogleAuth()
         gauth.LoadCredentialsFile(token_path)
 
         if gauth.credentials is None:
-            return {"error": "Token no válido o vencido. Se requiere autorización inicial."}
+            return {"error": "Token inválido o ausente. Debes autenticar con token válido."}
         elif gauth.access_token_expired:
             gauth.Refresh()
         else:
             gauth.Authorize()
 
-        drive = GoogleDrive(gauth)
-        # Verificamos que funcione intentando obtener los archivos raíz
-        archivos = drive.ListFile({'q': "'root' in parents and trashed=false"}).GetList()
-        return {"resultado": f"Conexión exitosa. {len(archivos)} archivos disponibles en tu Drive."}
+        gauth.SaveCredentialsFile(drive_token_path)
+        drive_instancia = GoogleDrive(gauth)
 
+        archivos = drive_instancia.ListFile({'q': "'root' in parents and trashed=false"}).GetList()
+        return {"resultado": f"Conectado a Google Drive. {len(archivos)} archivos listados."}
     except Exception as e:
         return {"error": str(e)}
-
 
 @mcp.tool(
     title="Generar Workflow Avanzado",
