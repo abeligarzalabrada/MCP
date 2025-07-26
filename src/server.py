@@ -10,15 +10,23 @@ import shutil
 import zipfile
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
-
+import json
 
 load_dotenv()
 
 client_gemini = genai.Client()
 mcp = FastMCP("MCP Server")
 
-#Control de archivos, carpetas y rutas
+# Directorio de configuración persistente
+USERDATA_DIR = "userData"
+EMAIL_CONFIG_FILE = os.path.join(USERDATA_DIR, "email_config.json")
+DRIVE_TOKEN_FILE = os.path.join(USERDATA_DIR, "drive_token.json")
+DRIVE_CONFIG_FILE = os.path.join(USERDATA_DIR, "drive_config.json")
+os.makedirs(USERDATA_DIR, exist_ok=True)
 
+drive_instancia = None
+
+#Control de archivos, carpetas y rutas
 @mcp.tool(
     title="Crea Archivo",
     description="Crea Archivos En El Sistema"
@@ -76,7 +84,6 @@ def copiar_archivo_tool(origen: str, destino: str):
         return {"resultado": f"Archivo copiado exitosamente desde {origen} a {destino}."}
     except Exception as e:
         return {"error": str(e)}
-
 
 @mcp.tool(
     title="Listar Archivos",
@@ -173,7 +180,6 @@ def descomprimir_zip_tool(archivo_zip: str, carpeta_destino: str):
     except Exception as e:
         return {"error": str(e)}
 
-
 @mcp.tool(
     title="Organizar archivos por tipo",
     description="Agrupa archivos en carpetas según su extensión."
@@ -190,14 +196,6 @@ def organizar_por_tipo_tool(path: str):
         return {"resultado": "Archivos organizados por tipo exitosamente."}
     except Exception as e:
         return {"error": str(e)}
-
-
-#Tools oficina, enviar correos y workflows
-
-# Variables globales de remitente
-USERDATA_DIR = "userData"
-EMAIL_CONFIG_FILE = os.path.join(USERDATA_DIR, "email_config.json")
-os.makedirs(USERDATA_DIR, exist_ok=True)
 
 @mcp.tool(
     title="Configurar cuenta de correo",
@@ -244,14 +242,6 @@ def enviar_correo_tool(destinatario: str, asunto: str, mensaje: str, remitente: 
     except Exception as e:
         return {"error": str(e)}
 
-#conectar drive
-USERDATA_DIR = "userData"
-DRIVE_TOKEN_FILE = os.path.join(USERDATA_DIR, "drive_token.json")
-DRIVE_CONFIG_FILE = os.path.join(USERDATA_DIR, "drive_config.json")
-os.makedirs(USERDATA_DIR, exist_ok=True)
-
-drive_instancia = None
-
 @mcp.tool(
     title="Conectar cuenta de Google Drive",
     description="Almacena y reutiliza credenciales de Drive de forma persistente."
@@ -269,10 +259,8 @@ def configurar_drive_tool(token_path: str = "mycreds.txt"):
         else:
             gauth.Authorize()
 
-        # Guardar el token en userData/drive_token.json
         gauth.SaveCredentialsFile(DRIVE_TOKEN_FILE)
 
-        # Guardar ruta de token usada (opcional)
         with open(DRIVE_CONFIG_FILE, "w") as f:
             json.dump({"token_path": token_path}, f)
 
@@ -288,7 +276,6 @@ def configurar_drive_tool(token_path: str = "mycreds.txt"):
     description="Genera diagramas de workflow complejos con sub-ramas y descripciones breves usando Graphviz y un modelo de IA."
 )
 def generar_workflow_avanzado_tool(solicitud: str):
-
     prompt = f"Genera un workflow detallado con subpasos y breves descripciones para: {solicitud}. Estructura claramente en ramas principales y subramas."
 
     response = client_gemini.models.generate_content(
@@ -297,7 +284,6 @@ def generar_workflow_avanzado_tool(solicitud: str):
     )
 
     workflow_data = response.text
-
     dot = Digraph(comment="Workflow avanzado", format="png")
 
     lines = workflow_data.strip().split('\n')
