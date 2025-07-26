@@ -51,11 +51,7 @@ async def client():
 
             response = geminis_peticion(texto_usuario, tools_info_promt)
 
-
-            if isinstance(response.text, list):
-                print(type(response.text))
-
-            elif any(tool.name in response.text for tool in tools_disponibles):
+            if any(tool.name in response.text for tool in tools_disponibles):
                 try:
                     nombre_herramienta, parametros_str = response.text.split(",", 1)
                     parametros = json.loads(parametros_str.replace("'", '"'))
