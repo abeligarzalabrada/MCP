@@ -128,6 +128,41 @@ def obtener_detalles_archivo_tool(path: str):
     return detalles
 
 @mcp.tool(
+    title="Estructura de carpetas",
+    description="Devuelve una estructura jerárquica de archivos desde la ruta dada."
+)
+def estructura_directorio_tool(path: str):
+    try:
+        estructura = []
+        for root, dirs, files in os.walk(path):
+            nivel = root.replace(path, "").count(os.sep)
+            indent = " " * 2 * nivel
+            estructura.append(f"{indent}{os.path.basename(root)}/")
+            for f in files:
+                estructura.append(f"{indent}  {f}")
+        return {"estructura": "\n".join(estructura)}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@mcp.tool(
+    title="Organizar archivos por tipo",
+    description="Agrupa archivos en carpetas según su extensión."
+)
+def organizar_por_tipo_tool(path: str):
+    try:
+        for archivo in os.listdir(path):
+            archivo_path = os.path.join(path, archivo)
+            if os.path.isfile(archivo_path):
+                ext = os.path.splitext(archivo)[1][1:] or "sin_extension"
+                destino = os.path.join(path, ext)
+                os.makedirs(destino, exist_ok=True)
+                shutil.move(archivo_path, os.path.join(destino, archivo))
+        return {"resultado": "Archivos organizados por tipo exitosamente."}
+    except Exception as e:
+        return {"error": str(e)}
+
+@mcp.tool(
     title="Enviar correo electrónico",
     description="Envía correos desde la cuenta indicada. Se recomienda usar contraseñas de aplicación para Gmail u otros proveedores SMTP."
 )
