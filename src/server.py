@@ -4,15 +4,15 @@ import time
 import smtplib
 from email.mime.text import MIMEText
 from graphviz import Digraph
-import google.generativeai as genai
+from google import genai
 from dotenv import load_dotenv
 import shutil
 import zipfile
 
 
 load_dotenv()
-genai.configure()
 
+client_gemini = genai.Client()
 mcp = FastMCP("MCP Server")
 
 #Control de archivos, carpetas y rutas
@@ -210,11 +210,14 @@ def enviar_correo_tool(remitente: str, contraseña: str, destinatario: str, asun
     description="Genera diagramas de workflow complejos con sub-ramas y descripciones breves usando Graphviz y un modelo de IA."
 )
 def generar_workflow_avanzado_tool(solicitud: str):
-    model = genai.GenerativeModel('gemini-1.0-pro')
 
     prompt = f"Genera un workflow detallado con subpasos y breves descripciones para: {solicitud}. Estructura claramente en ramas principales y subramas."
 
-    response = model.generate_content(prompt)
+    response = client_gemini.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=f"{prompt}",
+    )
+
     workflow_data = response.text
 
     dot = Digraph(comment="Workflow avanzado", format="png")
