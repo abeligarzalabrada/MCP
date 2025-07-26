@@ -9,7 +9,7 @@ import json
 load_dotenv()
 
 async def client():
-    async with MCPClient("./server.py") as mcp_client:
+    async with MCPClient("server.py") as mcp_client:
 
         tools_disponibles = await mcp_client.list_tools()
 
@@ -40,7 +40,7 @@ async def client():
         client = genai.Client()
 
         while True:
-            texto_usuario = input("🧑 Tú: ")
+            texto_usuario = input("🧑Tú: ")
 
             if texto_usuario.lower() in "exit": break
 
@@ -51,9 +51,8 @@ async def client():
                     thinking_config=types.ThinkingConfig(thinking_budget=0)
                 ),
             )
-            with open("ahora.txt", "w") as f:
-                j = response.text
-                print(j)
+            with open("test.txt", "w") as f:
+                print(response.text)
 
             if isinstance(response.text, list):
                 print(type(response.text))
