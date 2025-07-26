@@ -15,6 +15,8 @@ genai.configure()
 
 mcp = FastMCP("MCP Server")
 
+#Control de archivos, carpetas y rutas
+
 @mcp.tool(
     title="Crea Archivo",
     description="Crea Archivos En El Sistema"
@@ -144,6 +146,18 @@ def estructura_directorio_tool(path: str):
     except Exception as e:
         return {"error": str(e)}
 
+@mcp.tool(
+    title="Comprimir Archivos",
+    description="Crea un archivo .zip con archivos especificados separados por coma."
+)
+def comprimir_tool(archivos: str, salida_zip: str):
+    try:
+        with zipfile.ZipFile(salida_zip, 'w') as zipf:
+            for archivo in archivos.split(','):
+                zipf.write(archivo.strip())
+        return {"resultado": f"Archivos comprimidos en {salida_zip}"}
+    except Exception as e:
+        return {"error": str(e)}
 
 @mcp.tool(
     title="Organizar archivos por tipo",
@@ -161,6 +175,9 @@ def organizar_por_tipo_tool(path: str):
         return {"resultado": "Archivos organizados por tipo exitosamente."}
     except Exception as e:
         return {"error": str(e)}
+
+
+#Tools oficina, enviar correos y workflows
 
 @mcp.tool(
     title="Enviar correo electrónico",
@@ -186,18 +203,7 @@ def enviar_correo_tool(remitente: str, contraseña: str, destinatario: str, asun
     except Exception as e:
         return {"error": f"Error inesperado: {str(e)}"}
 
-@mcp.tool(
-    title="Comprimir Archivos",
-    description="Crea un archivo .zip con archivos especificados separados por coma."
-)
-def comprimir_tool(archivos: str, salida_zip: str):
-    try:
-        with zipfile.ZipFile(salida_zip, 'w') as zipf:
-            for archivo in archivos.split(','):
-                zipf.write(archivo.strip())
-        return {"resultado": f"Archivos comprimidos en {salida_zip}"}
-    except Exception as e:
-        return {"error": str(e)}
+
 
 @mcp.tool(
     title="Generar Workflow Avanzado",
