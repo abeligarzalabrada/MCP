@@ -8,6 +8,9 @@ from google import genai
 from dotenv import load_dotenv
 import shutil
 import zipfile
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
+
 
 load_dotenv()
 
@@ -215,6 +218,31 @@ def enviar_correo_tool(remitente: str, contraseña: str, destinatario: str, asun
     except Exception as e:
         return {"error": f"Error inesperado: {str(e)}"}
 
+#conectar drive
+
+@mcp.tool(
+    title="Conectar a Google Drive",
+    description="Autentica al usuario en Google Drive usando un token personalizado (clave de acceso)."
+)
+def conectar_drive_tool(token_path: str):
+    try:
+        gauth = GoogleAuth()
+        gauth.LoadCredentialsFile(token_path)
+
+        if gauth.credentials is None:
+            return {"error": "Token no válido o vencido. Se requiere autorización inicial."}
+        elif gauth.access_token_expired:
+            gauth.Refresh()
+        else:
+            gauth.Authorize()
+
+        drive = GoogleDrive(gauth)
+        # Verificamos que funcione intentando obtener los archivos raíz
+        archivos = drive.ListFile({'q': "'root' in parents and trashed=false"}).GetList()
+        return {"resultado": f"Conexión exitosa. {len(archivos)} archivos disponibles en tu Drive."}
+
+    except Exception as e:
+        return {"error": str(e)}
 
 
 @mcp.tool(
