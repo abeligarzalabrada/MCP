@@ -79,9 +79,6 @@ class MinimalDarkUI(tk.Tk):
 
     def save_config(self):
         # Aquí puedes guardar los valores donde lo necesites
-        # print("Email:", self.email_var.get())
-        # print("User Key:", self.ukey_var.get())
-        # print("Drive Key:", self.dkey_var.get())
         self.toggle_panel()
 
     def start_loop(self):
@@ -94,7 +91,6 @@ class MinimalDarkUI(tk.Tk):
             return
         self.input_var.set("")
         self.append_message("Tú", msg)
-        # Llama a la función asíncrona sin bloquear la UI
         self.loop.call_soon_threadsafe(self.loop.create_task, self.handle_bot_response(msg))
 
     def append_message(self, sender, message):
@@ -104,13 +100,12 @@ class MinimalDarkUI(tk.Tk):
         self.conversation.config(state='disabled')
 
     async def handle_bot_response(self, user_message):
-        # Si tienes un prompt de instrucciones global, puedes importarlo
-        tools_info_promt = """
-        ## Gemini Instructions (MCP)
-        ...
-        """
+        # Puedes personalizar el prompt según tu flujo
+        tools_info_promt = (
+            "## Gemini Instructions (MCP)\n"
+            "Puedes formatear tu prompt aquí según lo que espera tu client.py.\n"
+        )
         try:
-            # Llama a la función de generación (adaptando a sync si es necesario)
             loop = asyncio.get_event_loop()
             response = await loop.run_in_executor(
                 None,
