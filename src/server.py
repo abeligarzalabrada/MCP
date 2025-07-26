@@ -210,6 +210,8 @@ def configurar_drive_tool(token_path: str = DRIVE_TOKEN_FILE):
     except Exception as e:
         return {"error": str(e)}
 
+#workflow visual para facil entendimiento del ususrio
+
 @mcp.tool(title="Generar Workflow Avanzado", description="Genera diagramas de workflows usando Gemini y Graphviz.")
 def generar_workflow_avanzado_tool(solicitud: str):
     prompt = f"Genera un workflow detallado con subpasos y descripciones para: {solicitud}."
