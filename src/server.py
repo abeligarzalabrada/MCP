@@ -11,11 +11,9 @@ mcp = FastMCP("MCP Server")
 def create_archivo_tool(archivo: str):
     open(archivo,'x')
 
-
-
-@mcp.tool(
-    title= "Listador de elementos",
-    description= "ListaArchivos En El Sistema"
+@mcp.resource(
+    title= "Bucar Archivos",
+    description= "Bucar Archivos En El Sistema"
 )
 def search_archivo_tool(path:str):
     print(os.listdir(path))
@@ -34,6 +32,7 @@ def delete_archivo_tool(path:str):
 def editar_archivo_tool(path:str, text:str):
     with open(path,"w") as archivo:
         archivo.write(text)
+
 
 
 if __name__ == "__main__":
