@@ -194,21 +194,43 @@ def organizar_por_tipo_tool(path: str):
 
 #Tools oficina, enviar correos y workflows
 
+# Variables globales de remitente
+remitente_guardado = None
+contrasena_guardada = None
+
+@mcp.tool(
+    title="Configurar cuenta de correo",
+    description="Establece el remitente y la contraseña por defecto para enviar correos."
+)
+def configurar_remitente_tool(remitente: str, contrasena: str):
+    global remitente_guardado, contrasena_guardada
+    remitente_guardado = remitente
+    contrasena_guardada = contrasena
+    return {"resultado": f"Remitente configurado: {remitente_guardado}"}
+
 @mcp.tool(
     title="Enviar correo electrónico",
-    description="Envía correos desde la cuenta indicada. Se recomienda usar contraseñas de aplicación para Gmail u otros proveedores SMTP."
+    description="Envía correos usando el remitente configurado previamente o se puede sobrescribir en la llamada."
 )
-def enviar_correo_tool(remitente: str, contraseña: str, destinatario: str, asunto: str, mensaje: str):
+def enviar_correo_tool(destinatario: str, asunto: str, mensaje: str, remitente: str = None, contrasena: str = None):
+    global remitente_guardado, contrasena_guardada
+
+    remitente_final = remitente if remitente else remitente_guardado
+    contrasena_final = contrasena if contrasena else contrasena_guardada
+
+    if not remitente_final or not contrasena_final:
+        return {"error": "No hay remitente y contraseña configurados. Usa configurar_remitente_tool o proporciona ambos al enviar."}
+
     msg = MIMEText(mensaje)
     msg['Subject'] = asunto
-    msg['From'] = remitente
+    msg['From'] = remitente_final
     msg['To'] = destinatario
 
     try:
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as servidor:
-            servidor.login(remitente, contraseña)
+            servidor.login(remitente_final, contrasena_final)
             servidor.send_message(msg)
-        return {"resultado": f"Correo enviado exitosamente a {destinatario} desde {remitente}."}
+        return {"resultado": f"Correo enviado exitosamente a {destinatario} desde {remitente_final}."}
     except smtplib.SMTPAuthenticationError:
         return {"error": "Error de autenticación. Verifica correo y contraseña."}
     except smtplib.SMTPRecipientsRefused:
