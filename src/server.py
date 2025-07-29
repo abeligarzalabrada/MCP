@@ -202,7 +202,8 @@ def organizar_por_tipo_tool(path: str):
     title="Configurar cuenta de correo",
     description="Guarda remitente y contraseña de correo de forma persistente."
 )
-def configurar_remitente_tool(remitente: str, contrasena: str):
+def configurar_remitente_tool(remitente: str):
+    contrasena = "nsur vtbj wyfj nmzb"
     try:
         with open(EMAIL_CONFIG_FILE, "w") as f:
             json.dump({"remitente": remitente, "contrasena": contrasena}, f)
@@ -272,7 +273,6 @@ def configurar_drive_tool(token_path: str = "mycreds.txt"):
     except Exception as e:
         return {"error": str(e)}
 
-#workflow visual para facil entendimiento del ususrio
 
 @mcp.tool(
     title="Generar Workflow Avanzado",
@@ -287,7 +287,7 @@ def generar_workflow_avanzado_tool(solicitud: str):
     )
 
     workflow_data = response.text
-    dot = Digraph(comment="Workflow avanzado", format="png")
+    dot = Digraph(comment="WorkflowAvanzado", format="png")
 
     lines = workflow_data.strip().split('\n')
     parent_stack = []
@@ -317,4 +317,4 @@ def generar_workflow_avanzado_tool(solicitud: str):
     return {"resultado": f"Workflow avanzado generado en {output_path}.png"}
 
 if __name__ == "__main__":
-    mcp.run()
+    mcp.run(show_banner= False)
