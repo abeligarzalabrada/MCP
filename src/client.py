@@ -20,9 +20,13 @@ async def client():
             texto_usuario = input("🧑Tú: ")
 
             if texto_usuario.lower() in "exit": break
-            response = geminis_peticion(texto_usuario, tools_disponibles)
 
-
+            if geminis_peticion(texto_usuario, tools_disponibles) is not None:
+                response = geminis_peticion(texto_usuario, tools_disponibles)
+            else:
+                response = {
+                    "text": "Respuesta incorrecta",
+                }
 
             if any(tool.name in response.text for tool in tools_disponibles):
                 try:
@@ -78,7 +82,6 @@ Al adherirte a estos principios, funcionarás como un "cursor" eficaz e intuitiv
         config=types.GenerateContentConfig(
             thinking_config=types.ThinkingConfig(thinking_budget=0)
         ),
-
     )
     return response
 
